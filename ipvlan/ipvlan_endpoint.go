@@ -24,27 +24,34 @@ func (d *driver) CreateEndpoint(r *api.CreateEndpointRequest) (*api.CreateEndpoi
 		return nil, fmt.Errorf("network id %q not found", r.NetworkID)
 	}
 
-	if r.Interface.MacAddress != "" {
+	if len(r.Interface.MacAddress) != 0 {
 		return nil, fmt.Errorf("%s interfaces do not support custom mac address assigment", ipvlanType)
 	}
 
-	_, addressIPv4, err := net.ParseCIDR(r.Interface.Address)
-	if err != nil {
-		return nil, fmt.Errorf("%s is a invalid ipv4 address", r.Interface.Address)
-	}
-	_, addressIPv6, err := net.ParseCIDR(r.Interface.AddressIPv6)
-	if err != nil {
-		return nil, fmt.Errorf("%s is a invalid ipv6 address", r.Interface.AddressIPv6)
-	}
 	ep := &endpoint{
 		id:     r.NetworkID,
 		nid:    r.EndpointID,
-		addr:   addressIPv4,
-		addrv6: addressIPv6,
+
 	}
-	if ep.addr == nil {
+
+	if len(r.Interface.Address) == 0 {
 		return nil, fmt.Errorf("create endpoint was not passed an IP address")
 	}
+	if len(r.Interface.Address) > 0 {
+		_, addressIPv4, err := net.ParseCIDR(r.Interface.Address)
+		if err != nil {
+			return nil, fmt.Errorf("%s is a invalid ipv4 address", r.Interface.Address)
+		}
+		ep.addr = addressIPv4
+	}
+	if len(r.Interface.AddressIPv6) > 0 {
+		_, addressIPv6, err := net.ParseCIDR(r.Interface.AddressIPv6)
+		if err != nil {
+			return nil, fmt.Errorf("%s is a invalid ipv6 address", r.Interface.AddressIPv6)
+		}
+		ep.addrv6 = addressIPv6
+	}
+
 	// disallow port mapping -p
 	if opt, ok := r.Options[netlabel.PortMap]; ok {
 		if _, ok := opt.([]types.PortBinding); ok {

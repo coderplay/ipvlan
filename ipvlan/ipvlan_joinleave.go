@@ -80,9 +80,13 @@ func (d *driver) Join(r *api.JoinRequest) (*api.JoinResponse, error) {
 			if s == nil {
 				return nil, fmt.Errorf("could not find a valid ipv4 subnet for endpoint %s", r.EndpointID)
 			}
-			response.Gateway = s.GwIP
+			v4gw, _, err := net.ParseCIDR(s.GwIP)
+			if err != nil {
+				return nil, fmt.Errorf("gatway %s is not a valid ipv4 address: %v", s.GwIP, err)
+			}
+			response.Gateway = v4gw.String()
 			logrus.Debugf("Ipvlan Endpoint Joined with IPv4_Addr: %s, Gateway: %s, Ipvlan_Mode: %s, Parent: %s",
-				ep.addr.IP.String(), s.GwIP, n.config.IpvlanMode, n.config.Parent)
+				ep.addr.IP.String(), v4gw.String(), n.config.IpvlanMode, n.config.Parent)
 		}
 		// parse and correlate the endpoint v6 address with the available v6 subnets
 		if len(n.config.Ipv6Subnets) > 0 {
@@ -90,9 +94,13 @@ func (d *driver) Join(r *api.JoinRequest) (*api.JoinResponse, error) {
 			if s == nil {
 				return nil, fmt.Errorf("could not find a valid ipv6 subnet for endpoint %s", r.EndpointID)
 			}
-			response.GatewayIPv6 = s.GwIP
+			v6gw, _, err := net.ParseCIDR(s.GwIP)
+			if err != nil {
+				return nil, fmt.Errorf("gatway %s is not a valid ipv6 address: %v", s.GwIP, err)
+			}
+			response.GatewayIPv6 = v6gw.String()
 			logrus.Debugf("Ipvlan Endpoint Joined with IPv6_Addr: %s, Gateway: %s, Ipvlan_Mode: %s, Parent: %s",
-				ep.addrv6.IP.String(), s.GwIP, n.config.IpvlanMode, n.config.Parent)
+				ep.addrv6.IP.String(), v6gw.String(), n.config.IpvlanMode, n.config.Parent)
 		}
 	}
 

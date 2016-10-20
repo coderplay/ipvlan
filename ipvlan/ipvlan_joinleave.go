@@ -12,7 +12,7 @@ import (
 	"github.com/docker/libnetwork/drivers/remote/api"
 )
 
-const (
+var (
 	defaultV4Route = &api.StaticRoute{
 		"0.0.0.0/0",
 		types.CONNECTED,

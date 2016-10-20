@@ -94,12 +94,12 @@ func (d *driver) RevokeExternalConnectivity(r *api.RevokeExternalConnectivityReq
 }
 
 // DiscoverNew is a notification for a new discovery event.
-func (d *driver) DiscoverNew(dType discoverapi.DiscoveryType, data interface{}) error {
+func (d *driver) DiscoverNew(r *api.DiscoveryNotification) error {
 	return nil
 }
 
-// DiscoverDelete is a notification for a discovery delete event.
-func (d *driver) DiscoverDelete(dType discoverapi.DiscoveryType, data interface{}) error {
+// DiscoverDelete is a notification for a discovery delete event
+func (d *driver) DiscoverDelete(r *api.DiscoveryNotification) error {
 	return nil
 }
 

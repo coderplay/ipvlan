@@ -14,7 +14,7 @@ func main() {
 		address          string
 	)
 
-	flag.StringVar(&debug, "debug", false, "enable debugging")
+	flag.BoolVar(&debug, "debug", false, "enable debugging")
 	flag.StringVar(&address, "socket", "/run/docker/plugins/ipvlan.sock", "socket on which to listen")
 
 	flag.Parse()

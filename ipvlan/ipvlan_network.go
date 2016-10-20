@@ -8,11 +8,8 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/libnetwork/driverapi"
 	"github.com/docker/libnetwork/netlabel"
-	"github.com/docker/libnetwork/options"
 	"github.com/docker/libnetwork/osl"
-	"github.com/docker/libnetwork/types"
 	"github.com/docker/libnetwork/drivers/remote/api"
-	"github.com/openshift/origin/pkg/cmd/cli/cmd/create"
 )
 
 // CreateNetwork the network for the specified driver type

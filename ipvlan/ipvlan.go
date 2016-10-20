@@ -74,7 +74,9 @@ func (d *driver) NetworkFree(id string) error {
 	return types.NotImplementedErrorf("not implemented")
 }
 
-//TODO: getCapabilities
+func (driver *driver) GetCapabilities() (*api.GetCapabilityResponse, error) {
+	return &api.GetCapabilityResponse{ Scope: "local"}, nil
+}
 
 func (d *driver) EndpointOperInfo(*api.EndpointInfoRequest) (*api.EndpointInfoResponse, error) {
 	return &api.EndpointInfoResponse{Value: make(map[string]interface{}, 0)}, nil

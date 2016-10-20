@@ -13,12 +13,12 @@ import (
 )
 
 var (
-	defaultV4Route = &api.StaticRoute{
+	defaultV4Route = api.StaticRoute{
 		"0.0.0.0/0",
 		types.CONNECTED,
 		"0.0.0.0",
 	}
-	defaultV6Route = &api.StaticRoute{
+	defaultV6Route = api.StaticRoute{
 		"::/0",
 		types.CONNECTED,
 		"::",

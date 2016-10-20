@@ -29,9 +29,8 @@ func (d *driver) CreateEndpoint(r *api.CreateEndpointRequest) (*api.CreateEndpoi
 	}
 
 	ep := &endpoint{
-		id:     r.NetworkID,
-		nid:    r.EndpointID,
-
+		id:     r.EndpointID,
+		nid:    r.NetworkID,
 	}
 
 	if len(r.Interface.Address) == 0 {

@@ -43,7 +43,7 @@ func (d *driver) CreateEndpoint(r *api.CreateEndpointRequest) (*api.CreateEndpoi
 		addrv6: addressIPv6,
 	}
 	if ep.addr == nil {
-		return fmt.Errorf("create endpoint was not passed an IP address")
+		return nil, fmt.Errorf("create endpoint was not passed an IP address")
 	}
 	// disallow port mapping -p
 	if opt, ok := r.Options[netlabel.PortMap]; ok {

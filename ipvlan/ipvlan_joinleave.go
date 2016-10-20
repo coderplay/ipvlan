@@ -12,15 +12,17 @@ import (
 	"github.com/docker/libnetwork/drivers/remote/api"
 )
 
-type staticRoute struct {
-	Destination *net.IPNet
-	RouteType   int
-	NextHop     net.IP
-}
-
 const (
-	defaultV4RouteCidr = "0.0.0.0/0"
-	defaultV6RouteCidr = "::/0"
+	defaultV4Route = &api.StaticRoute{
+		"0.0.0.0/0",
+		types.CONNECTED,
+		"0.0.0.0",
+	}
+	defaultV6Route = &api.StaticRoute{
+		"::/0",
+		types.CONNECTED,
+		"::",
+	}
 )
 
 // Join method is invoked when a Sandbox is attached to an endpoint.
@@ -61,20 +63,12 @@ func (d *driver) Join(r *api.JoinRequest) (*api.JoinResponse, error) {
 	if n.config.IpvlanMode == modeL3 {
 		// disable gateway services to add a default gw using dev eth0 only
 		//jinfo.DisableGatewayService()
-		defaultRoute, err := ifaceGateway(defaultV4RouteCidr)
-		if err != nil {
-			return nil, err
-		}
-		response.StaticRoutes = append(response.StaticRoutes, defaultRoute)
+		response.StaticRoutes = append(response.StaticRoutes, defaultV4Route)
 		logrus.Debugf("Ipvlan Endpoint Joined with IPv4_Addr: %s, Ipvlan_Mode: %s, Parent: %s",
 			ep.addr.IP.String(), n.config.IpvlanMode, n.config.Parent)
 		// If the endpoint has a v6 address, set a v6 default route
 		if ep.addrv6 != nil {
-			default6Route, err := ifaceGateway(defaultV6RouteCidr)
-			if err != nil {
-				return nil, err
-			}
-			response.StaticRoutes = append(response.StaticRoutes, default6Route)
+			response.StaticRoutes = append(response.StaticRoutes, defaultV6Route)
 			logrus.Debugf("Ipvlan Endpoint Joined with IPv6_Addr: %s, Ipvlan_Mode: %s, Parent: %s",
 				ep.addrv6.IP.String(), n.config.IpvlanMode, n.config.Parent)
 		}
@@ -86,13 +80,9 @@ func (d *driver) Join(r *api.JoinRequest) (*api.JoinResponse, error) {
 			if s == nil {
 				return nil, fmt.Errorf("could not find a valid ipv4 subnet for endpoint %s", r.EndpointID)
 			}
-			v4gw, _, err := net.ParseCIDR(s.GwIP)
-			if err != nil {
-				return nil, fmt.Errorf("gatway %s is not a valid ipv4 address: %v", s.GwIP, err)
-			}
-			response.Gateway = v4gw
+			response.Gateway = s.GwIP
 			logrus.Debugf("Ipvlan Endpoint Joined with IPv4_Addr: %s, Gateway: %s, Ipvlan_Mode: %s, Parent: %s",
-				ep.addr.IP.String(), v4gw.String(), n.config.IpvlanMode, n.config.Parent)
+				ep.addr.IP.String(), s.GwIP, n.config.IpvlanMode, n.config.Parent)
 		}
 		// parse and correlate the endpoint v6 address with the available v6 subnets
 		if len(n.config.Ipv6Subnets) > 0 {
@@ -100,13 +90,9 @@ func (d *driver) Join(r *api.JoinRequest) (*api.JoinResponse, error) {
 			if s == nil {
 				return nil, fmt.Errorf("could not find a valid ipv6 subnet for endpoint %s", r.EndpointID)
 			}
-			v6gw, _, err := net.ParseCIDR(s.GwIP)
-			if err != nil {
-				return nil, fmt.Errorf("gatway %s is not a valid ipv6 address: %v", s.GwIP, err)
-			}
-			response.GatewayIPv6 = v6gw
+			response.GatewayIPv6 = s.GwIP
 			logrus.Debugf("Ipvlan Endpoint Joined with IPv6_Addr: %s, Gateway: %s, Ipvlan_Mode: %s, Parent: %s",
-				ep.addrv6.IP.String(), v6gw.String(), n.config.IpvlanMode, n.config.Parent)
+				ep.addrv6.IP.String(), s.GwIP, n.config.IpvlanMode, n.config.Parent)
 		}
 	}
 
@@ -133,21 +119,6 @@ func (d *driver) Leave(r *api.LeaveRequest) error {
 	}
 
 	return nil
-}
-
-// ifaceGateway returns a static route for either v4/v6 to be set to the container eth0
-func ifaceGateway(dfNet string) (*staticRoute, error) {
-	nh, dst, err := net.ParseCIDR(dfNet)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse default route %v", err)
-	}
-	defaultRoute := &staticRoute{
-		Destination: dst,
-		RouteType:   types.CONNECTED,
-		NextHop:     nh,
-	}
-
-	return defaultRoute, nil
 }
 
 // getSubnetforIPv4 returns the ipv4 subnet to which the given IP belongs

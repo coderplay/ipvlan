@@ -40,14 +40,14 @@ func (d *driver) CreateEndpoint(r *api.CreateEndpointRequest) (*api.CreateEndpoi
 	if len(r.Interface.Address) > 0 {
 		_, addressIPv4, err := net.ParseCIDR(r.Interface.Address)
 		if err != nil {
-			return nil, fmt.Errorf("%s is a invalid ipv4 address", r.Interface.Address)
+			return nil, fmt.Errorf("%s is an invalid ipv4 address", r.Interface.Address)
 		}
 		ep.addr = addressIPv4
 	}
 	if len(r.Interface.AddressIPv6) > 0 {
 		_, addressIPv6, err := net.ParseCIDR(r.Interface.AddressIPv6)
 		if err != nil {
-			return nil, fmt.Errorf("%s is a invalid ipv6 address", r.Interface.AddressIPv6)
+			return nil, fmt.Errorf("%s %d is an invalid ipv6 address", r.Interface.AddressIPv6, len(r.Interface.AddressIPv6))
 		}
 		ep.addrv6 = addressIPv6
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/docker/libnetwork/osl"
 	"github.com/docker/libnetwork/types"
 	"github.com/docker/libnetwork/drivers/remote/api"
+	"net"
 )
 
 // CreateEndpoint assigns the mac, ip and endpoint id for the new container
@@ -23,14 +24,23 @@ func (d *driver) CreateEndpoint(r *api.CreateEndpointRequest) (*api.CreateEndpoi
 		return nil, fmt.Errorf("network id %q not found", r.NetworkID)
 	}
 
-	if r.Interface.MacAddress != nil {
+	if r.Interface.MacAddress != "" {
 		return nil, fmt.Errorf("%s interfaces do not support custom mac address assigment", ipvlanType)
+	}
+
+	_, addressIPv4, err := net.ParseCIDR(r.Interface.Address)
+	if err != nil {
+		return nil, fmt.Errorf("%s is a invalid ipv4 address", r.Interface.Address)
+	}
+	_, addressIPv6, err := net.ParseCIDR(r.Interface.AddressIPv6)
+	if err != nil {
+		return nil, fmt.Errorf("%s is a invalid ipv6 address", r.Interface.AddressIPv6)
 	}
 	ep := &endpoint{
 		id:     r.NetworkID,
 		nid:    r.EndpointID,
-		addr:   r.Interface.Address,
-		addrv6: r.Interface.AddressIPv6,
+		addr:   addressIPv4,
+		addrv6: addressIPv6,
 	}
 	if ep.addr == nil {
 		return fmt.Errorf("create endpoint was not passed an IP address")

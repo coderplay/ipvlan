@@ -12,6 +12,7 @@ import (
 	"github.com/docker/libnetwork/osl"
 	"github.com/docker/libnetwork/types"
 	"github.com/docker/libnetwork/drivers/remote/api"
+	"github.com/openshift/origin/pkg/cmd/cli/cmd/create"
 )
 
 // CreateNetwork the network for the specified driver type
@@ -32,7 +33,7 @@ func (d *driver) CreateNetwork(r *api.CreateNetworkRequest) error {
 		return fmt.Errorf("ipv4 pool is empty")
 	}
 	// parse and validate the config and bind to networkConfiguration
-	config, err := parseNetworkOptions(r.NetworkID, r.Options)
+	config, err := parseNetworkOptions(r.NetworkID, stringOptions(r.Options))
 	if err != nil {
 		return err
 	}
@@ -73,6 +74,24 @@ func (d *driver) CreateNetwork(r *api.CreateNetworkRequest) error {
 		return err
 	}
 
+	return nil
+}
+
+// Deal with excessively-generic way the options get decoded from JSON
+func stringOptions(options map[string]interface{}) map[string]string {
+	if options != nil {
+		if data, found := options[netlabel.GenericData]; found {
+			if options, ok := data.(map[string]interface{}); ok {
+				out := make(map[string]string, len(options))
+				for key, value := range options {
+					if str, ok := value.(string); ok {
+						out[key] = str
+					}
+				}
+				return out
+			}
+		}
+	}
 	return nil
 }
 
@@ -160,47 +179,16 @@ func (d *driver) DeleteNetwork(r *api.DeleteNetworkRequest) error {
 }
 
 // parseNetworkOptions parse docker network options
-func parseNetworkOptions(id string, option options.Generic) (*configuration, error) {
+func parseNetworkOptions(id string, option map[string]string) (*configuration, error) {
 	var (
 		err    error
 		config = &configuration{}
 	)
-	// parse generic labels first
-	if genData, ok := option[netlabel.GenericData]; ok && genData != nil {
-		if config, err = parseNetworkGenericOptions(genData); err != nil {
-			return nil, err
-		}
-	}
-	// setting the parent to "" will trigger an isolated network dummy parent link
-	if _, ok := option[netlabel.Internal]; ok {
-		config.Internal = true
-		// empty --parent= and --internal are handled the same.
-		config.Parent = ""
+
+	if err = config.fromOptions(option); err != nil {
+		return nil, err
 	}
 	return config, nil
-}
-
-// parseNetworkGenericOptions parse generic driver docker network options
-func parseNetworkGenericOptions(data interface{}) (*configuration, error) {
-	var (
-		err    error
-		config *configuration
-	)
-	switch opt := data.(type) {
-	case *configuration:
-		config = opt
-	case map[string]string:
-		config = &configuration{}
-		err = config.fromOptions(opt)
-	case options.Generic:
-		var opaqueConfig interface{}
-		if opaqueConfig, err = options.GenerateFromModel(opt, config); err == nil {
-			config = opaqueConfig.(*configuration)
-		}
-	default:
-		err = types.BadRequestErrorf("unrecognized network configuration format: %v", opt)
-	}
-	return config, err
 }
 
 // fromOptions binds the generic options to networkConfiguration to cache

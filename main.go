@@ -27,5 +27,7 @@ func main() {
 
 	d := ipvlan.NewDriver()
 	h := ipvlan.NewHandler(d)
-	h.ServeUnix("root", "ipvlan")
+	if err := h.ServeUnix("root", "ipvlan"); err {
+		log.Fatalf("Server down %v", err)
+	}
 }
